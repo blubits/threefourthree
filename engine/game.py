@@ -60,7 +60,7 @@ class Game:
         # check for win/lose conditions
         if self.is_lost():
             self.game_state = GameState.LOST
-        if self.win_condition in report["merged_tiles"]:
+        if not self.is_continued() and self.win_condition in report["merged_tiles"]:
             self.game_state = GameState.WON
 
     def is_over(self):
@@ -71,6 +71,9 @@ class Game:
 
     def is_lost(self):
         return self.game_state == GameState.LOST
+
+    def is_continued(self):
+        return self.game_state == GameState.KEEP_PLAYING
 
     def keep_playing(self):
         if not self.is_won():
