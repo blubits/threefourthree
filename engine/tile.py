@@ -22,3 +22,6 @@ class Tile:
 
     def __str__(self):
         return "[{0:4}]".format(self.value)
+
+    def to_tuple(self):
+        return (self.value, self.x, self.y)

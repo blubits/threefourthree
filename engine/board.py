@@ -80,11 +80,32 @@ class Board:
         """
         return not self.is_out_of_bounds(i, j) and self.tile(i, j) is None
 
+    def is_full(self):
+        """
+        Checks if the board is already full.
+        """
+        return not any([tile is None for row in self.board for tile in row])
+
+    def is_lost(self):
+        """
+        Checks if the board has already been lost, i.e. there are no more
+        possible moves.
+        """
+        return self.is_full() and self.no_moves_possible()
+
     def move_all(self, direction):
         """
         Moves all tiles onto a certain direction and merges
         like tiles.
+
+        Returns:
+            A report of the game state upon merge, listing (1) the total
+            value of all merged tiles and (2) the values of the tiles merged.
         """
+        report = {
+            "score": 0,
+            "merged_tiles": []
+        }
         if direction == BoardMovements.DOWN:
             vector = (1, 0)
             tile_list = self.tiles_by_column_reversed()
@@ -107,9 +128,17 @@ class Board:
                 self.move(tile, i, j)
             if not self.is_out_of_bounds(i + vector[0], j + vector[1]) and self.tile(i + vector[0], j + vector[1]).value == tile.value:
                 self.board[i + vector[0]][j + vector[1]] += tile
+                report["score"] += self.board[i +
+                                              vector[0]][j + vector[1]].value
+                report["merged_tiles"].append(
+                    self.board[i + vector[0]][j + vector[1]].to_tuple())
                 self.delete(tile)
+        return report
 
     def move(self, tile, i, j):
+        """
+        Moves a tile to the position (i, j).
+        """
         if self.is_out_of_bounds(i, j):
             raise IndexError("Index {0}, {1} out of bounds".format(i, j))
         if not self.is_empty(i, j):
@@ -119,6 +148,19 @@ class Board:
         self.delete(tile)
         tile.x = i
         tile.y = j
+
+    def no_moves_possible(self):
+        """
+        Checks if no more moves are possible.
+        """
+        vectors = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        for tile in self.tiles_by_row():
+            for vector in vectors:
+                i = tile.x + vector[0]
+                j = tile.y + vector[1]
+                if not self.is_out_of_bounds(i, j) and self.tile(i, j).value == tile.value:
+                    return False
+        return True
 
     def tile(self, i, j):
         """

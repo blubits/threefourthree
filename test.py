@@ -5,5 +5,6 @@ b.insert_random(5)
 print(b)
 
 print()
-b.move_all(BoardMovements.RIGHT)
+x = b.move_all(BoardMovements.RIGHT)
 print(b)
+print(x)
