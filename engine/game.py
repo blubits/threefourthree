@@ -39,6 +39,13 @@ class Game:
         self.win_condition = initial_value ** win_condition
         self.score = 0
 
+    def peek_board(self):
+        """
+        Returns a quick "peek" at the board: all tiles on the board have
+        been replaced with their values.
+        """
+        return [[None if tile is None else tile.value for tile in row] for row in self.board]
+
     def move_board(self, direction):
         """
         Moves the board to a certain direction. Direction is one of "up",
@@ -54,14 +61,19 @@ class Game:
             "left": BoardMovements.LEFT,
             "right": BoardMovements.RIGHT
         }
-        direction_value = directions_dict(self)
+        direction_value = directions_dict[direction]
         report = self.board.move_all(direction_value)
         self.score += report["score"]
         # check for win/lose conditions
         if self.is_lost():
             self.game_state = GameState.LOST
-        if not self.is_continued() and self.win_condition in report["merged_tiles"]:
+        if not self.is_continued() and self.win_condition in [t[0] for t in report["merged_tiles"]]:
             self.game_state = GameState.WON
+        if not self.is_over():
+            try:
+                self.board.insert_random()
+            except ValueError:
+                pass
 
     def is_over(self):
         return self.game_state == GameState.WON or self.game_state == GameState.LOST

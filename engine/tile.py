@@ -7,7 +7,8 @@ A board tile.
 
 class Tile:
 
-    def __init__(self, value, x, y):
+    def __init__(self, value, base_value, x, y):
+        self.base_value = base_value
         self.value = value
         self.x = x
         self.y = y
@@ -17,7 +18,7 @@ class Tile:
             raise TypeError("cannot add Tile with {0}".format(type(other)))
         if other.value != self.value:
             raise ValueError("cannot add two Tiles of different values")
-        self.value += other.value
+        self.value *= other.base_value
         return self
 
     def __str__(self):

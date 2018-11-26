@@ -59,13 +59,16 @@ class Board:
         """
         Inserts n random tiles on the board.
         """
-        random_cells = random.sample(self.available(), n)
+        try:
+            random_cells = random.sample(self.available(), n)
+        except ValueError:
+            raise ValueError("too many tiles to insert")
         for i, j in random_cells:
             if random.random() > 0.9:
                 value = self.initial_value * self.initial_value
             else:
                 value = self.initial_value
-            self.insert(Tile(value, i, j))
+            self.insert(Tile(value, self.initial_value, i, j))
 
     def is_out_of_bounds(self, i, j):
         """
