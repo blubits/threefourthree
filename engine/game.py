@@ -69,7 +69,7 @@ class Game:
             self.game_state = GameState.LOST
         if not self.is_continued() and self.win_condition in [t[0] for t in report["merged_tiles"]]:
             self.game_state = GameState.WON
-        if not self.is_over():
+        if not self.is_over() and report["moves_made"]:
             try:
                 self.board.insert_random()
             except ValueError:
