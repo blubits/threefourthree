@@ -9,6 +9,7 @@ Main launch file to start the game and process launch options.
 import sys
 
 from views import TerminalInterface
+from views import GUIInterface
 from controller import Controller
 
 USAGE = """Usage: python main.py [-d] [--help]
@@ -23,8 +24,7 @@ def main():
         exit(0)
 
     if '-d' in sys.argv:
-        print("Whoops! That doesn't exist yet")
-        exit(0)
+        interface_mode = GUIInterface()
     else:
         interface_mode = TerminalInterface()
 

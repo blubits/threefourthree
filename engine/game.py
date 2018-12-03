@@ -44,7 +44,7 @@ class Game:
         Returns a quick "peek" at the board: all tiles on the board have
         been replaced with their values.
         """
-        return [[None if tile is None else tile.value for tile in row] for row in self.board]
+        return [[None if tile is None else tile.value for tile in row] for row in self.board.board]
 
     def move_board(self, direction):
         """
