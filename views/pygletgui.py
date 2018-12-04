@@ -4,59 +4,33 @@ from pyglet.window import key
 class PygletGUI(pyglet.window.Window):
 
 	def __init__(self, init_class):
-		super().__init__(width = 1024, height = 768)
-		self.super_class = init_class
-		self.assets = self.load_assets()
-		self.batch = pyglet.graphics.Batch()
-		self.board = pyglet.sprite.Sprite(self.assets['board'])
-		self.direction = None
-		self.sprites = [[None for _ in range(6)] for _ in range(6)]
-		self.score = pyglet.text.Label('Score: {}'.format(self.super_class.current_game.score),
-							   x = 490, y = 768 - 144, font_size = 32,
-							   color = (0, 0, 0, 255))
-		self.board_status = self.super_class.current_game.peek_board()
-		self.print_board()
+		super().__init__(width = 1024, height = 768, resizable = False)
+		self.init_class = init_class
 
-		# Input Wait
-		self.animation_complete = True
+		# Variables
 		self.wait_input = False
+		self.board_status = self.init_class.current_game.peek_board()
+		self.board_status_old = [[None for _ in range(6)] for _ in range(6)]
 
+		# Graphics
+		self.assets = self.load_assets()
+		self.sprites = [[None for _ in range(6)] for _ in range(6)]
+		self.board = pyglet.sprite.Sprite(self.assets['board'])
+		self.game_over_screen = None
+		self.score = self.init_class.current_game.score
+		self.batch = pyglet.graphics.Batch()
+		self.score_text = pyglet.text.Label('Score: {}'.format(self.score),
+											x = 490, y = 768 - 144, font_size = 32,
+											color = (0, 0, 0, 255))
+		
 		# Animation Purposes
-		self.flag = False
-		self.flag1 = False
-		self.flag2 = False
+		self.anim_done = [False for _ in range(5)]
+		self.animate_tiles_destroy = []
+		self.animate_tiles_create = []
+		self.animation_start = True
 
-	def print_board(self):
-		self.board_status = self.super_class.current_game.peek_board()
-		print()
-		print(self.super_class.current_game.board)
-		self.output_board(self.board_status)
-		self.score.text = 'Score: {}'.format(self.super_class.current_game.score)
-
-	def on_won(self):
-		print('ez win')
-		self.wait_input = True
-		pyglet.sprite.Sprite(self.assets['won']).opacity = 255 * (85 / 100)
-
-	def on_lost(self):
-		print('lost lol noob')
-		self.wait_input = True
-		pyglet.sprite.Sprite(self.assets['lost']).opacity = 255 * (85 / 100)
-
-	def on_exit(self):
-		self.view_events.end()
-
-	def output_board(self, board):
-		for i in range(len(board)):
-			for j in range(len(board[i])):
-				if board[i][j] is not None:
-					self.sprites[i][j] = pyglet.sprite.Sprite(self.assets[board[i][j]],
-														x = 253 + (88 * j) + 44, 
-														y = 768 - (287 + (88 * i)) + 44,
-														batch = self.batch)
-				else:
-					self.sprites[i][j] = None
-
+		# Init run
+		
 	def load_img(self, file, format = 'png', anchor_x = 0, anchor_y = 0):
 		img = pyglet.image.load('assets/{}.{}'.format(file, format))
 		img.anchor_x = anchor_x
@@ -81,96 +55,108 @@ class PygletGUI(pyglet.window.Window):
 		}
 		return assets
 
-	def animate(self):
-		if self.wait_input:
-			
-			# Board Update:
-			board_status_old = self.super_class.current_game.peek_board()
-			self.super_class.view_events.move(self.direction)
-			self.board_status = self.super_class.current_game.peek_board()
+	def press_action(self):
+		self.board_status_old = self.init_class.current_game.peek_board()
+		self.init_class.view_events.move(self.direction)
+		self.animation_start = True
 
-			# Score Update:
-			self.score.text = 'Score: {}'.format(self.super_class.current_game.score)
+	def animate(self, dt):
+		if self.animation_start:
+			## Part 0: Setup
+			if not any(self.anim_done):
+				self.board_status = self.init_class.current_game.peek_board()
+				self.score = self.init_class.current_game.score
+				self.score_text.text = 'Score: {}'.format(self.score)
 
-			self.animate_tiles_move = []
-			self.animate_tiles = []
-			for i in range(len(self.board_status)):
-				for j in range(len(self.board_status)):
-					if board_status_old[i][j] != self.board_status[i][j] and board_status_old[i][j] is not None:
-						self.animate_tiles_move.append((i, j))
-					if board_status_old[i][j] != self.board_status[i][j] and self.board_status[i][j] is not None:
-						self.animate_tiles.append((i, j))
-			print()
-			print(self.super_class.current_game.board)
-			print(self.animate_tiles_move)
-			print(self.animate_tiles)
-			
-			self.flag1 = False
-			self.flag2 = False
-			self.animation_complete = False
-			self.direction = None
+				for i in range(6):
+					for j in range(6):
+						if self.board_status[i][j] != self.board_status_old[i][j] and self.board_status_old[i][j] is not None:
+							self.animate_tiles_destroy.append((i, j))
+						if self.board_status[i][j] != self.board_status_old[i][j] and self.board_status[i][j] is not None:
+							self.animate_tiles_create.append((i, j))
 
+				self.anim_done[0] = True
 
-	def animate_board(self, dt):
-		if not self.animation_complete:
-			print('part1')
-			if not self.flag1 and not self.flag2:
-				# Animate Tiles Fade
-				for vector in self.animate_tiles_move:
+			## Part 1: Destroying Tile Sprites
+			elif all(self.anim_done[0:1]) and not any(self.anim_done[1:]):
+				for vector in self.animate_tiles_destroy:
 					if self.sprites[vector[0]][vector[1]].scale > 0:
-						self.sprites[vector[0]][vector[1]].scale -= dt * 7.25
-						print(self.sprites[vector[0]][vector[1]].scale)
+						self.sprites[vector[0]][vector[1]].scale -= dt * 100
 					else:
-						print('part3')
-						self.flag1 = True
 						self.sprites[vector[0]][vector[1]] = None
+						self.anim_done[1] = True
 
-			elif self.flag1 and not self.flag2:
+				if len(self.animate_tiles_destroy) == 0:
+					self.anim_done[1] = True
 
-				# Delay
+			## Part 2: 0.05 Seconds Delay
+			elif all(self.anim_done[0:2]) and not any(self.anim_done[2:]):
 				def trig(dt):
-					self.flag2 = True
-					print(self.sprites)
-				pyglet.clock.schedule_once(trig, 0.05)
+					self.anim_done[2] = True
+				pyglet.clock.schedule_once(trig, 0.03)
 
-			elif self.flag2 and self.flag1:
-			# Animate New Tiles
-				for vector in self.animate_tiles:
+			## Part 3: Creating Tile Sprites
+			elif all(self.anim_done[0:3]) and not any(self.anim_done[3:]):
+				for vector in self.animate_tiles_create:
 					if self.sprites[vector[0]][vector[1]] == None and self.board_status[vector[0]][vector[1]] is not None:
 						self.sprites[vector[0]][vector[1]] = pyglet.sprite.Sprite(self.assets[self.board_status[vector[0]][vector[1]]],
-																x = 253 + (88 * vector[1]) + 44, 
-																y = 768 - (287 + (88 * vector[0])) + 44,
-																batch = self.batch)
+																				  x = 253 + (88 * vector[1]) + 44,
+																				  y = 768 - (287 + (88 * vector[0])) + 44,
+																				  batch = self.batch
+																				 )
 						self.sprites[vector[0]][vector[1]].scale = 0
-				for vector in self.animate_tiles:
+
+				self.anim_done[3] = True
+
+			## Part 4: Animating Created Tile Sprites
+			elif all(self.anim_done[0:4]) and not any(self.anim_done[4:]):
+				for vector in self.animate_tiles_create:
 					if self.sprites[vector[0]][vector[1]].scale < 1:
-						self.sprites[vector[0]][vector[1]].scale += dt * 7.25
+						self.sprites[vector[0]][vector[1]].scale += dt * 100
 					else:
-						self.flag = True
 						self.sprites[vector[0]][vector[1]].scale = 1
-					
-			if self.flag:
-				self.animate_tiles = []
-				self.animate_tiles_move = []
-				self.animation_complete = True
-				self.flag1 = False
-				self.flag2 = False
+						self.anim_done[4] = True
+
+				if len(self.animate_tiles_create) == 0:
+					self.anim_done[4] = True
+
+			## Part 5: Final Modifications
+			elif all(self.anim_done):
+				self.animate_tiles_create = []
+				self.animate_tiles_destroy = []
 				self.wait_input = False
+				self.animation_start = False
+				self.anim_done = [False for _ in range(5)]
+
+	def on_won(self):
+		self.wait_input = True
+		self.game_over_screen = pyglet.sprite.Sprite(self.assets['won'])
+		self.game_over_screen.opacity = 255 * (85 / 100)
+
+	def on_lost(self):
+		self.wait_input = True
+		self.game_over_screen = pyglet.sprite.Sprite(self.assets['lost'])
+		self.game_over_screen.opacity = 255 * (85 / 100)
 
 	def on_key_press(self, symbol, modifiers):
-		directions = {key.LEFT: 'left', key.RIGHT: 'right',
-					  key.UP: 'up', key.DOWN: 'down'}
+		directions = {key.UP: 'up', key.DOWN: 'down',
+					  key.RIGHT: 'right', key.LEFT: 'left'
+		}
 		if symbol in directions and not self.wait_input:
 			self.direction = directions[symbol]
 			self.wait_input = True
-			self.animate()
+			self.press_action()
+
 
 	def on_draw(self):
 		self.clear()
 		self.board.draw()
-		self.score.draw()
+		self.score_text.draw()
 		self.batch.draw()
 
+		if self.game_over_screen is not None:
+			self.game_over_screen.draw()
+
 	def run(self):
-		pyglet.clock.schedule_interval(self.animate_board, 1 / 60)
+		pyglet.clock.schedule_interval(self.animate, 1 / 60)
 		pyglet.app.run()
