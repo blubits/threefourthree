@@ -1,3 +1,7 @@
+import os
+
+import json
+
 import pyglet
 from pyglet.window import key, mouse
 
@@ -6,6 +10,8 @@ class PygletGUI(pyglet.window.Window):
 	def __init__(self, init_class):
 		super().__init__(width = 1024, height = 768, resizable = False)
 		self.init_class = init_class
+		self.init_class.view_events.create(size=6, initial_value=3,
+                                    initial_tiles=8, win_condition=10)
 
 		# Variables
 		self.wait_input = True
@@ -28,11 +34,13 @@ class PygletGUI(pyglet.window.Window):
 											color = (0, 0, 0, 255), batch = self.batch)
 		self.retry_b = pyglet.text.Label('Retry', x = 818, y = 768 - 144, font_size = 32,
 											color = (0, 0, 0, 255), batch = self.batch)
-		self.save = pyglet.text.Label('Save', x = 818, y = 768 - 324, font_size = 32,
+		self.save_b = pyglet.text.Label('Save', x = 818, y = 768 - 324, font_size = 32,
 											color = (0, 0, 0, 255), batch = self.batch)
-		self.load = pyglet.text.Label('Load', x = 818, y = 768 - 504, font_size = 32,
+		self.load_b = pyglet.text.Label('Load', x = 818, y = 768 - 504, font_size = 32,
 											color = (0, 0, 0, 255), batch = self.batch)
-		
+		self.message = pyglet.text.Label('', x = 818, y = 768 - 704, font_size = 32,
+											color = (0, 0, 0, 255), batch = self.batch)
+				
 		# Animation Purposes
 		self.anim_done = [False for _ in range(5)]
 		self.animate_tiles_destroy = []
@@ -147,39 +155,67 @@ class PygletGUI(pyglet.window.Window):
 		self.score = self.init_class.current_game.score
 		self.animation_start = True
 
+	def save(self):
+		self.message.text = 'Saving...'
+		with open('save.json', 'w') as outfile:
+			json.dump(self.game_state, outfile)
+		self.message.text = 'Saved.'
+		self.wait_input = False
+
+	def load(self):
+		if os.path.exists('save.json'):
+			self.board_status_old = self.init_class.current_game.peek_board()
+			self.message.text = "Loading..."
+			with open('save.json') as infile:
+				self.game_state = json.load(infile)
+			self.init_class.view_events.create(size = 6, initial_value = 3,
+                                    initial_tiles = 1, win_condition = 10,
+                                    game_state= self.game_state)
+			self.message.text = "Loaded."
+			self.board_status = self.init_class.current_game.peek_board()
+			self.score = self.init_class.current_game.score
+			self.animation_start = True
+		else:
+			self.message.text = "No save file."
+		
+
 	def on_won(self):
 		self.wait_input = True
 		self.game_over_screen = pyglet.sprite.Sprite(self.assets['won'], batch = self.game_over_batch)
 		self.game_over_screen.opacity = 255 * (85 / 100)
+		if os.path.exists('save.json'):
+			os.delete('save.json')
 
 	def on_lost(self):
 		print('lol noob lost')
 		self.wait_input = True
 		self.game_over_screen = pyglet.sprite.Sprite(self.assets['lost'], batch = self.game_over_batch)
 		self.game_over_screen.opacity = 255 * (85 / 100)
+		if os.path.exists('save.json'):
+			os.delete('save.json')
 
 	def on_mouse_motion(self, x, y, dx, dy):
 		if self.retry_b.x <= x <= self.retry_b.x + self.retry_b.content_width and self.retry_b.y <= y <= self.retry_b.y + self.retry_b.content_height:
 			self.retry_b.color = (0, 255, 0, 255)
 		else:
 			self.retry_b.color = (0, 0, 0, 255)
-		if self.save.x <= x <= self.save.x + self.save.content_width and self.save.y <= y <= self.save.y + self.save.content_height:
-			self.save.color = (0, 255, 0, 255)
+		if self.save_b.x <= x <= self.save_b.x + self.save_b.content_width and self.save_b.y <= y <= self.save_b.y + self.save_b.content_height:
+			self.save_b.color = (0, 255, 0, 255)
 		else:
-			self.save.color = (0, 0, 0, 255)
-		if self.load.x <= x <= self.load.x + self.load.content_width and self.load.y <= y <= self.load.y + self.load.content_height:
-			self.load.color = (0, 255, 0, 255)
+			self.save_b.color = (0, 0, 0, 255)
+		if self.load_b.x <= x <= self.load_b.x + self.load_b.content_width and self.load_b.y <= y <= self.load_b.y + self.load_b.content_height:
+			self.load_b.color = (0, 255, 0, 255)
 		else:
-			self.load.color = (0, 0, 0, 255)
+			self.load_b.color = (0, 0, 0, 255)
 
 	def on_mouse_press(self, x, y, button, modifiers):
 		if button == mouse.LEFT:
 			if self.retry_b.x <= x <= self.retry_b.x + self.retry_b.content_width and self.retry_b.y <= y <= self.retry_b.y + self.retry_b.content_height:
 				self.retry_b.color = (255, 0, 0, 255)
-			if self.save.x <= x <= self.save.x + self.save.content_width and self.save.y <= y <= self.save.y + self.save.content_height:
-				self.save.color = (255, 0, 0, 255)
-			if self.load.x <= x <= self.load.x + self.load.content_width and self.load.y <= y <= self.load.y + self.load.content_height:
-				self.load.color = (255, 0, 0, 255)
+			if self.save_b.x <= x <= self.save_b.x + self.save_b.content_width and self.save_b.y <= y <= self.save_b.y + self.save_b.content_height:
+				self.save_b.color = (255, 0, 0, 255)
+			if self.load_b.x <= x <= self.load_b.x + self.load_b.content_width and self.load_b.y <= y <= self.load_b.y + self.load_b.content_height:
+				self.load_b.color = (255, 0, 0, 255)
 
 	def on_mouse_release(self, x, y, button, modifiers):
 		if self.retry_b.x <= x <= self.retry_b.x + self.retry_b.content_width and self.retry_b.y <= y <= self.retry_b.y + self.retry_b.content_height:
@@ -189,14 +225,20 @@ class PygletGUI(pyglet.window.Window):
 				self.retry()
 		else:
 			self.retry_b.color = (0, 0, 0, 255)
-		if self.save.x <= x <= self.save.x + self.save.content_width and self.save.y <= y <= self.save.y + self.save.content_height:
-			self.save.color = (0, 255, 0, 255)
+		if self.save_b.x <= x <= self.save_b.x + self.save_b.content_width and self.save_b.y <= y <= self.save_b.y + self.save_b.content_height:
+			self.save_b.color = (0, 255, 0, 255)
+			if not self.wait_input:
+				self.wait_input = True
+				self.save()
 		else:
-			self.save.color = (0, 0, 0, 255)
-		if self.load.x <= x <= self.load.x + self.load.content_width and self.load.y <= y <= self.load.y + self.load.content_height:
-			self.load.color = (0, 255, 0, 255)
+			self.save_b.color = (0, 0, 0, 255)
+		if self.load_b.x <= x <= self.load_b.x + self.load_b.content_width and self.load_b.y <= y <= self.load_b.y + self.load_b.content_height:
+			self.load_b.color = (0, 255, 0, 255)
+			if not self.wait_input:
+				self.wait_input = True
+				self.load()
 		else:
-			self.load.color = (0, 0, 0, 255)
+			self.load_b.color = (0, 0, 0, 255)
 
 	def on_key_press(self, symbol, modifiers):
 		directions = {key.UP: 'up', key.DOWN: 'down',
