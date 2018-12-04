@@ -131,6 +131,7 @@ class PygletGUI(pyglet.window.Window):
 
 			## Part 3: Creating Tile Sprites
 			elif all(self.anim_done[0:3]) and not any(self.anim_done[3:]):
+				tiles_created = False
 				for vector in self.animate_tiles_create:
 					if self.sprites[vector[0]][vector[1]] == None and self.board_status[vector[0]][vector[1]] is not None:
 						self.sprites[vector[0]][vector[1]] = pyglet.sprite.Sprite(self.assets[self.board_status[vector[0]][vector[1]]],
@@ -139,8 +140,9 @@ class PygletGUI(pyglet.window.Window):
 																				  batch = self.batch
 																				 )
 						self.sprites[vector[0]][vector[1]].scale = 0
-
-				self.sfx.play()
+						tiles_created = True
+				if tiles_created:
+					self.sfx.play()
 				self.anim_done[3] = True
 
 			## Part 4: Animating Created Tile Sprites
