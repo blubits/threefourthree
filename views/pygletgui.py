@@ -1,5 +1,5 @@
 import pyglet
-from pyglet.window import key
+from pyglet.window import key, mouse
 
 class PygletGUI(pyglet.window.Window):
 
@@ -8,7 +8,8 @@ class PygletGUI(pyglet.window.Window):
 		self.init_class = init_class
 
 		# Variables
-		self.wait_input = False
+		self.wait_input = True
+		self.game_state = self.init_class.controller.game_state()
 		self.board_status = self.init_class.current_game.peek_board()
 		self.board_status_old = [[None for _ in range(6)] for _ in range(6)]
 
@@ -19,9 +20,18 @@ class PygletGUI(pyglet.window.Window):
 		self.game_over_screen = None
 		self.score = self.init_class.current_game.score
 		self.batch = pyglet.graphics.Batch()
+		self.game_over_batch = pyglet.graphics.Batch()
+
+		# UI
 		self.score_text = pyglet.text.Label('Score: {}'.format(self.score),
 											x = 490, y = 768 - 144, font_size = 32,
-											color = (0, 0, 0, 255))
+											color = (0, 0, 0, 255), batch = self.batch)
+		self.retry_b = pyglet.text.Label('Retry', x = 818, y = 768 - 144, font_size = 32,
+											color = (0, 0, 0, 255), batch = self.batch)
+		self.save = pyglet.text.Label('Save', x = 818, y = 768 - 324, font_size = 32,
+											color = (0, 0, 0, 255), batch = self.batch)
+		self.load = pyglet.text.Label('Load', x = 818, y = 768 - 504, font_size = 32,
+											color = (0, 0, 0, 255), batch = self.batch)
 		
 		# Animation Purposes
 		self.anim_done = [False for _ in range(5)]
@@ -81,7 +91,7 @@ class PygletGUI(pyglet.window.Window):
 			elif all(self.anim_done[0:1]) and not any(self.anim_done[1:]):
 				for vector in self.animate_tiles_destroy:
 					if self.sprites[vector[0]][vector[1]].scale > 0:
-						self.sprites[vector[0]][vector[1]].scale -= dt * 12.5
+						self.sprites[vector[0]][vector[1]].scale -= dt * 10
 					else:
 						self.sprites[vector[0]][vector[1]] = None
 						self.anim_done[1] = True
@@ -93,7 +103,7 @@ class PygletGUI(pyglet.window.Window):
 			elif all(self.anim_done[0:2]) and not any(self.anim_done[2:]):
 				def trig(dt):
 					self.anim_done[2] = True
-				pyglet.clock.schedule_once(trig, 0.03)
+				pyglet.clock.schedule_once(trig, 0.04)
 
 			## Part 3: Creating Tile Sprites
 			elif all(self.anim_done[0:3]) and not any(self.anim_done[3:]):
@@ -112,7 +122,7 @@ class PygletGUI(pyglet.window.Window):
 			elif all(self.anim_done[0:4]) and not any(self.anim_done[4:]):
 				for vector in self.animate_tiles_create:
 					if self.sprites[vector[0]][vector[1]].scale < 1:
-						self.sprites[vector[0]][vector[1]].scale += dt * 12.5
+						self.sprites[vector[0]][vector[1]].scale += dt * 10
 					else:
 						self.sprites[vector[0]][vector[1]].scale = 1
 						self.anim_done[4] = True
@@ -124,19 +134,69 @@ class PygletGUI(pyglet.window.Window):
 			elif all(self.anim_done):
 				self.animate_tiles_create = []
 				self.animate_tiles_destroy = []
-				self.wait_input = False
-				self.animation_start = False
 				self.anim_done = [False for _ in range(5)]
+				self.animation_start = False
+				self.wait_input = False
+
+	def retry(self):
+		self.board_status_old = self.init_class.current_game.peek_board()
+		self.init_class.view_events.create(size = 6, initial_value = 3,
+								initial_tiles = 8, win_condition = 10)
+		self.game_state = self.init_class.controller.game_state()
+		self.board_status = self.init_class.current_game.peek_board()
+		self.score = self.init_class.current_game.score
+		self.animation_start = True
 
 	def on_won(self):
 		self.wait_input = True
-		self.game_over_screen = pyglet.sprite.Sprite(self.assets['won'])
+		self.game_over_screen = pyglet.sprite.Sprite(self.assets['won'], batch = self.game_over_batch)
 		self.game_over_screen.opacity = 255 * (85 / 100)
 
 	def on_lost(self):
+		print('lol noob lost')
 		self.wait_input = True
-		self.game_over_screen = pyglet.sprite.Sprite(self.assets['lost'])
+		self.game_over_screen = pyglet.sprite.Sprite(self.assets['lost'], batch = self.game_over_batch)
 		self.game_over_screen.opacity = 255 * (85 / 100)
+
+	def on_mouse_motion(self, x, y, dx, dy):
+		if self.retry_b.x <= x <= self.retry_b.x + self.retry_b.content_width and self.retry_b.y <= y <= self.retry_b.y + self.retry_b.content_height:
+			self.retry_b.color = (0, 255, 0, 255)
+		else:
+			self.retry_b.color = (0, 0, 0, 255)
+		if self.save.x <= x <= self.save.x + self.save.content_width and self.save.y <= y <= self.save.y + self.save.content_height:
+			self.save.color = (0, 255, 0, 255)
+		else:
+			self.save.color = (0, 0, 0, 255)
+		if self.load.x <= x <= self.load.x + self.load.content_width and self.load.y <= y <= self.load.y + self.load.content_height:
+			self.load.color = (0, 255, 0, 255)
+		else:
+			self.load.color = (0, 0, 0, 255)
+
+	def on_mouse_press(self, x, y, button, modifiers):
+		if button == mouse.LEFT:
+			if self.retry_b.x <= x <= self.retry_b.x + self.retry_b.content_width and self.retry_b.y <= y <= self.retry_b.y + self.retry_b.content_height:
+				self.retry_b.color = (255, 0, 0, 255)
+			if self.save.x <= x <= self.save.x + self.save.content_width and self.save.y <= y <= self.save.y + self.save.content_height:
+				self.save.color = (255, 0, 0, 255)
+			if self.load.x <= x <= self.load.x + self.load.content_width and self.load.y <= y <= self.load.y + self.load.content_height:
+				self.load.color = (255, 0, 0, 255)
+
+	def on_mouse_release(self, x, y, button, modifiers):
+		if self.retry_b.x <= x <= self.retry_b.x + self.retry_b.content_width and self.retry_b.y <= y <= self.retry_b.y + self.retry_b.content_height:
+			self.retry_b.color = (0, 255, 0, 255)
+			if not self.wait_input:
+				self.wait_input = True
+				self.retry()
+		else:
+			self.retry_b.color = (0, 0, 0, 255)
+		if self.save.x <= x <= self.save.x + self.save.content_width and self.save.y <= y <= self.save.y + self.save.content_height:
+			self.save.color = (0, 255, 0, 255)
+		else:
+			self.save.color = (0, 0, 0, 255)
+		if self.load.x <= x <= self.load.x + self.load.content_width and self.load.y <= y <= self.load.y + self.load.content_height:
+			self.load.color = (0, 255, 0, 255)
+		else:
+			self.load.color = (0, 0, 0, 255)
 
 	def on_key_press(self, symbol, modifiers):
 		directions = {key.UP: 'up', key.DOWN: 'down',
@@ -153,10 +213,8 @@ class PygletGUI(pyglet.window.Window):
 		self.board.draw()
 		self.score_text.draw()
 		self.batch.draw()
-
-		if self.game_over_screen is not None:
-			self.game_over_screen.draw()
-
+		self.game_over_batch.draw()
+	
 	def run(self):
 		pyglet.clock.schedule_interval(self.animate, 1 / 60)
 		pyglet.app.run()
