@@ -22,10 +22,22 @@ class Board:
         self.size = size
         self.initial_value = initial_value
 
+    def __iter__(self):
+        """
+        Returns iter(self).
+        """
+        return iter(self.board)
+
     def __len__(self):
+        """
+        Returns len(self).
+        """
         return self.size
 
     def __str__(self):
+        """
+        Returns str(self).
+        """
         return '\n'.join([
             ' '.join([
                 str(tile) if tile is not None else "[    ]" for tile in row
@@ -34,7 +46,7 @@ class Board:
 
     def available(self):
         """
-        List of available positions on the board.
+        Returns a list of available positions on the board.
         """
         cells = []
         for i in range(self.size):
@@ -47,13 +59,13 @@ class Board:
         """
         Deletes a tile from the board.
         """
-        self.board[tile.x][tile.y] = None
+        self.board[tile.i][tile.j] = None
 
     def insert(self, tile):
         """
         Inserts a tile on the board.
         """
-        self.board[tile.x][tile.y] = tile
+        self.board[tile.i][tile.j] = tile
 
     def insert_random(self, n=1):
         """
@@ -89,58 +101,66 @@ class Board:
         """
         return not any([tile is None for row in self.board for tile in row])
 
-    def is_lost(self):
-        """
-        Checks if the board has already been lost, i.e. there are no more
-        possible moves.
-        """
-        return self.is_full() and self.no_moves_possible()
-
     def move_all(self, direction):
         """
-        Moves all tiles onto a certain direction and merges
-        like tiles.
+        Moves all tiles onto a certain direction and merges like tiles
+        three-wise.
+
+        Args:
+            direction (BoardMovements): The direction of the tiles' movement.
 
         Returns:
             A report of the game state upon merge, listing (1) the total
-            value of all merged tiles and (2) the values of the tiles merged.
+            value of all merged tiles, (2) the values of the tiles merged,
+            and (3) whether any moves were made on the board itself.
         """
+
         report = {
             "score": 0,
-            "merged_tiles": []
+            "merged_tiles": [],
+            "moves_made": False
         }
-        if direction == BoardMovements.DOWN:
-            vector = (1, 0)
-            tile_list = self.tiles_by_column_reversed()
-        elif direction == BoardMovements.UP:
-            vector = (-1, 0)
-            tile_list = self.tiles_by_column()
-        elif direction == BoardMovements.RIGHT:
-            vector = (0, 1)
-            tile_list = self.tiles_by_row_reversed()
-        elif direction == BoardMovements.LEFT:
-            vector = (0, -1)
-            tile_list = self.tiles_by_row()
+
+        v, tile_list = {
+            BoardMovements.DOWN: ((1, 0), self.tiles_by_column_reversed()),
+            BoardMovements.UP: ((-1, 0), self.tiles_by_column()),
+            BoardMovements.RIGHT: ((0, 1), self.tiles_by_row_reversed()),
+            BoardMovements.LEFT: ((0, -1), self.tiles_by_row())
+        }[direction]
+
+        vi = v[0]
+        vj = v[1]
+
         for tile in tile_list:
-            i = tile.x
-            j = tile.y
-            while self.is_empty(i + vector[0], j + vector[1]):
-                i += vector[0]
-                j += vector[1]
-            if i != tile.x or j != tile.y:
+            i = tile.i
+            j = tile.j
+            while self.is_empty(i + vi, j + vj):
+                i += vi
+                j += vj
+            if i != tile.i or j != tile.j:
                 self.move(tile, i, j)
-            if not self.is_out_of_bounds(i + vector[0], j + vector[1]) and self.tile(i + vector[0], j + vector[1]).value == tile.value:
-                self.board[i + vector[0]][j + vector[1]] += tile
-                report["score"] += self.board[i +
-                                              vector[0]][j + vector[1]].value
+                report["moves_made"] = True
+            if not self.is_out_of_bounds(i + (2 * vi), j + (2 * vj)) \
+                    and self.tile(i + vi, j + vj) == tile \
+                    and self.tile(i + (2 * vi), j + (2 * vj)) == tile:
+                self.board[i + (2 * vi)][j + (2 * vj)
+                                         ] += self.board[i + vi][j + vj]
+                self.board[i + (2 * vi)][j + (2 * vj)] += tile
+                report["score"] += self.board[i + (2 * vi)][j + (2 * vj)].value
                 report["merged_tiles"].append(
-                    self.board[i + vector[0]][j + vector[1]].to_tuple())
+                    self.board[i + (2 * vi)][j + (2 * vj)].to_tuple())
                 self.delete(tile)
+                self.delete(self.board[i + vi][j + vj])
         return report
 
     def move(self, tile, i, j):
         """
         Moves a tile to the position (i, j).
+
+        Args:
+            tile (Tile): Tile to move.
+            i (int): Row of the new tile's position.
+            j (int): Column of the new tile's position.
         """
         if self.is_out_of_bounds(i, j):
             raise IndexError("Index {0}, {1} out of bounds".format(i, j))
@@ -149,19 +169,29 @@ class Board:
                 "A tile already exists at index {0}, {1}".format(i, j))
         self.board[i][j] = tile
         self.delete(tile)
-        tile.x = i
-        tile.y = j
+        tile.i = i
+        tile.j = j
 
     def no_moves_possible(self):
         """
         Checks if no more moves are possible.
+
+        Returns:
+            True if the board is full and no more merges can be done
+            on the board.
         """
+        if not self.is_full():
+            return False
         vectors = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         for tile in self.tiles_by_row():
             for vector in vectors:
-                i = tile.x + vector[0]
-                j = tile.y + vector[1]
-                if not self.is_out_of_bounds(i, j) and self.tile(i, j).value == tile.value:
+                i2 = tile.i + (2 * vector[0])
+                j2 = tile.j + (2 * vector[1])
+                i = tile.i + vector[0]
+                j = tile.j + vector[1]
+                if not self.is_out_of_bounds(i2, j2) \
+                        and self.tile(i, j) == tile \
+                        and self.tile(i2, j2) == tile:
                     return False
         return True
 
