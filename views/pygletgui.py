@@ -81,7 +81,7 @@ class PygletGUI(pyglet.window.Window):
 			elif all(self.anim_done[0:1]) and not any(self.anim_done[1:]):
 				for vector in self.animate_tiles_destroy:
 					if self.sprites[vector[0]][vector[1]].scale > 0:
-						self.sprites[vector[0]][vector[1]].scale -= dt * 100
+						self.sprites[vector[0]][vector[1]].scale -= dt * 12.5
 					else:
 						self.sprites[vector[0]][vector[1]] = None
 						self.anim_done[1] = True
@@ -112,7 +112,7 @@ class PygletGUI(pyglet.window.Window):
 			elif all(self.anim_done[0:4]) and not any(self.anim_done[4:]):
 				for vector in self.animate_tiles_create:
 					if self.sprites[vector[0]][vector[1]].scale < 1:
-						self.sprites[vector[0]][vector[1]].scale += dt * 100
+						self.sprites[vector[0]][vector[1]].scale += dt * 12.5
 					else:
 						self.sprites[vector[0]][vector[1]].scale = 1
 						self.anim_done[4] = True
