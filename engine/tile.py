@@ -13,6 +13,7 @@ class Tile:
 
         Args:
             value (int): Value of current tile.
+            base_value (int): Value of the initial tile on the board.
             i (int): Row index of tile.
             j (int): Column index of tile.
         """

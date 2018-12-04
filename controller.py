@@ -27,11 +27,9 @@ class Controller:
         self.interface.view_events.end += self.on_end
 
     def game_state(self):
-        return {
-            "board": self.current_game.peek_board(),
-            "score": self.current_game.score,
-            "state": str(self.current_game.game_state)[10:]
-        }
+        if self.current_game is None:
+            return {}
+        return self.current_game.game_state()
 
     def on_create(self, *args, **kwargs):
         self.current_game = Game(*args, **kwargs)
