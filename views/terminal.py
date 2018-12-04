@@ -7,6 +7,9 @@ A basic terminal interface.
 
 from .interface import Interface
 
+import os
+import json
+
 class TerminalInterface(Interface):
 
     def __init__(self):
@@ -16,15 +19,28 @@ class TerminalInterface(Interface):
     def introduce(self):
         print("Welcome to the three-four-three terminal interface!")
         print()
-        self.view_events.create(size=4, initial_value=2,
-                                initial_tiles=15, win_condition=11)
+        if os.path.exists("save.json"):
+            with open("save.json") as infile:
+                game_state = json.load(infile)
+            self.view_events.create(size=6, initial_value=3,
+                                    initial_tiles=1, win_condition=10,
+                                    game_state=game_state)
+        else:
+            self.view_events.create(size=6, initial_value=3,
+                                    initial_tiles=1, win_condition=10)
 
     def ask_input(self):
         while True:
-            direction = input("Input a direction ('exit' to exit) > ")
-            if direction.lower() in ['exit', 'left', 'right', 'up', 'down']:
+            direction = input("Input a direction ('exit'/'save') > ")
+            if direction.lower() in ['save', 'exit', 'left', 'right', 'up', 'down']:
                 break
         if direction == 'exit':
+            self.view_events.end()
+            self.interface_end = True
+        elif direction == 'save':
+            game_state = self.controller.game_state()
+            with open("save.json", "w") as outfile:
+                json.dump(game_state, outfile)
             self.view_events.end()
             self.interface_end = True
         else:
@@ -37,6 +53,8 @@ class TerminalInterface(Interface):
 
     def on_lose(self):
         print("You lost :(")
+        if os.path.exists("save.json"):
+            os.remove("save.json")
         self.interface_end = True
 
     def on_won(self):
@@ -47,6 +65,8 @@ class TerminalInterface(Interface):
         else:
             self.view_events.end()
             self.interface_end = True
+            if os.path.exists("save.json"):
+                os.remove("save.json")
 
     def run(self):
         self.initialize_event_handlers()

@@ -5,20 +5,42 @@ A board of tiles.
 :Version:    v20181125
 """
 
-from .tile import Tile
 import random
 from enum import Enum
 
+from .tile import Tile
+
 class BoardMovements(Enum):
+    """
+    Directions that the board can move in. Used internally by the
+    engine to signal movements to the Board.
+    """
     UP = 1
     DOWN = 2
     LEFT = 3
     RIGHT = 4
 
 class Board:
+    """
+    A board of tiles, part of the TFT engine.
+    """
 
-    def __init__(self, size, initial_value):
-        self.board = [[None for _ in range(size)] for i in range(size)]
+    def __init__(self, size, initial_value, board=None):
+        """
+        Initializes a new Board.
+
+        Args:
+            size (int): The size of the board's side.
+            initial_value (int): The value of the base tile in the game.
+                In regular 2048 play, this is 2.
+            board (list of Tiles, optional): Board to load in, can be
+                used to load a saved game. If None, a new Board will
+                be loaded.
+        """
+        if board is None:
+            self.board = [[None for _ in range(size)] for i in range(size)]
+        else:
+            self.board = board
         self.size = size
         self.initial_value = initial_value
 
@@ -86,12 +108,20 @@ class Board:
         """
         Checks if a certain position (i, j) is out of the bounds
         of the board.
+
+        Args:
+            i (int): Row index.
+            j (int): Column index.
         """
         return not (0 <= i < self.size and 0 <= j < self.size)
 
     def is_empty(self, i, j):
         """
         Checks if a position (i, j) on the board is empty.
+
+        Args:
+            i (int): Row index.
+            j (int): Column index.
         """
         return not self.is_out_of_bounds(i, j) and self.tile(i, j) is None
 
@@ -104,7 +134,7 @@ class Board:
     def move_all(self, direction):
         """
         Moves all tiles onto a certain direction and merges like tiles
-        three-wise.
+        three - wise.
 
         Args:
             direction (BoardMovements): The direction of the tiles' movement.
@@ -131,6 +161,14 @@ class Board:
         vi = v[0]
         vj = v[1]
 
+        # 2048 algorithm:
+        #   iterate through each tile in the appropriate order,
+        #   pushing it towards the wall the specified direction
+        #   is going to.
+        #
+        # This will always work if the iteration order is correct:
+        # for example, if we push all tiles left, we iterate
+        # row-wise and from the rightmost column.
         for tile in tile_list:
             i = tile.i
             j = tile.j
@@ -143,6 +181,7 @@ class Board:
             if not self.is_out_of_bounds(i + (2 * vi), j + (2 * vj)) \
                     and self.tile(i + vi, j + vj) == tile \
                     and self.tile(i + (2 * vi), j + (2 * vj)) == tile:
+                # We do three-way merges here
                 self.board[i + (2 * vi)][j + (2 * vj)
                                          ] += self.board[i + vi][j + vj]
                 self.board[i + (2 * vi)][j + (2 * vj)] += tile
@@ -198,6 +237,10 @@ class Board:
     def tile(self, i, j):
         """
         Returns the tile at (i, j).
+
+        Args:
+            i (int): Row index.
+            j (int): Column index.
         """
         return self.board[i][j]
 
