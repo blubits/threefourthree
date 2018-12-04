@@ -14,7 +14,8 @@ class PygletGUI(pyglet.window.Window):
 		for i in range(6):
 			self.sprites.append([])
 			for j in range(6):
-				self.sprites[i].append(None)
+				self.sprites[i].append(None) # 'i' ba talaga and not 'j' ??
+
 		self.score = pyglet.text.Label('Score: {}'.format(self.super_class.current_game.score),
 							   x = 490, y = 768 - 144, font_size = 32,
 							   color = (0, 0, 0, 255))
@@ -83,7 +84,6 @@ class PygletGUI(pyglet.window.Window):
 	def animate(self):
 		if self.wait_input:
 			
-			
 			# Board Update:
 			board_status_old = self.super_class.current_game.peek_board()
 			self.super_class.view_events.move(self.direction)
@@ -110,9 +110,8 @@ class PygletGUI(pyglet.window.Window):
 			self.animation_complete = False
 			self.direction = None
 
+
 	def animate_board(self, dt):
-		
-		
 		if not self.animation_complete:
 			print('part1')
 			if not self.flag1 and not self.flag2:
@@ -125,7 +124,7 @@ class PygletGUI(pyglet.window.Window):
 						print('part3')
 						self.flag1 = True
 						self.sprites[vector[0]][vector[1]] = None
-					
+
 			elif self.flag1 and not self.flag2:
 
 				# Delay
