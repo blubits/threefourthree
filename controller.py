@@ -15,9 +15,9 @@ class Controller:
         """
         self.current_game = None
         self.interface = interface
+
         # Enable two-way comms between interface and view
         self.interface.controller = self
-
         self.controller_events = ControllerEvents()
 
         # register view event handlerrs
@@ -26,8 +26,15 @@ class Controller:
         self.interface.view_events.keep_playing += self.on_keep_playing
         self.interface.view_events.end += self.on_end
 
-    def on_create(self, **kwargs):
-        self.current_game = Game(**kwargs)
+    def game_state(self):
+        return {
+            "board": self.current_game.peek_board(),
+            "score": self.current_game.score,
+            "state": str(self.current_game.game_state)[10:]
+        }
+
+    def on_create(self, *args, **kwargs):
+        self.current_game = Game(*args, **kwargs)
 
     def on_move(self, direction):
         self.current_game.move_board(direction)

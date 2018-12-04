@@ -7,22 +7,30 @@ A board tile.
 
 class Tile:
 
-    def __init__(self, value, base_value, x, y):
-        self.base_value = base_value
+    def __init__(self, value, base_value, i, j):
+        """
+        Initializes a new Tile.
+
+        Args:
+            value (int): Value of current tile.
+            i (int): Row index of tile.
+            j (int): Column index of tile.
+        """
         self.value = value
-        self.x = x
-        self.y = y
+        self.i = i
+        self.j = j
 
     def __add__(self, other):
         if not isinstance(other, Tile):
             raise TypeError("cannot add Tile with {0}".format(type(other)))
-        if other.value != self.value:
-            raise ValueError("cannot add two Tiles of different values")
-        self.value *= other.base_value
+        self.value += other.value
         return self
+
+    def __eq__(self, other):
+        return self.value == other.value
 
     def __str__(self):
         return "[{0:4}]".format(self.value)
 
     def to_tuple(self):
-        return (self.value, self.x, self.y)
+        return (self.value, self.i, self.j)

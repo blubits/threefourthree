@@ -33,6 +33,7 @@ class TerminalInterface(Interface):
     def print_board(self):
         print("Score:", self.current_game.score)
         print(self.current_game.board)
+        print(self.controller.game_state())
 
     def on_lose(self):
         print("You lost :(")
