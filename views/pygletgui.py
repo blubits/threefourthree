@@ -172,6 +172,7 @@ class PygletGUI(pyglet.window.Window):
 		self.board_status_old = self.init_class.current_game.peek_board()
 		self.init_class.view_events.create(size = 6, initial_value = 3,
 								initial_tiles = 8, win_condition = 10)
+		self.game_over_screen = None
 		self.game_state = self.init_class.controller.game_state()
 		self.board_status = self.init_class.current_game.peek_board()
 		self.score = self.init_class.current_game.score
@@ -213,20 +214,20 @@ class PygletGUI(pyglet.window.Window):
 		Runs when the game has been won.
 		"""
 		self.wait_input = True
-		self.game_over_screen = pyglet.sprite.Sprite(self.assets['won'], batch = self.game_over_batch)
+		self.game_over_screen = pyglet.sprite.Sprite(self.assets['won'], x = 245, y = 768 - 735, batch = self.game_over_batch)
 		self.game_over_screen.opacity = 255 * (85 / 100)
 		if os.path.exists('save.json'):
-			os.delete('save.json')
+			os.remove('save.json')
 
 	def on_lost(self):
 		"""
 		Runs when the game has been lost.
 		"""
 		self.wait_input = True
-		self.game_over_screen = pyglet.sprite.Sprite(self.assets['lost'], batch = self.game_over_batch)
+		self.game_over_screen = pyglet.sprite.Sprite(self.assets['lose'],x = 245, y = 768 - 735, batch = self.game_over_batch)
 		self.game_over_screen.opacity = 255 * (85 / 100)
 		if os.path.exists('save.json'):
-			os.delete('save.json')
+			os.remove('save.json')
 
 	def on_mouse_press(self, x, y, button, modifiers):
 		if button == mouse.LEFT:
