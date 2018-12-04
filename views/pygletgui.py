@@ -10,12 +10,7 @@ class PygletGUI(pyglet.window.Window):
 		self.batch = pyglet.graphics.Batch()
 		self.board = pyglet.sprite.Sprite(self.assets['board'])
 		self.direction = None
-		self.sprites = []
-		for i in range(6):
-			self.sprites.append([])
-			for j in range(6):
-				self.sprites[i].append(None) # 'i' ba talaga and not 'j' ??
-
+		self.sprites = [[None for _ in range(6)] for _ in range(6)]
 		self.score = pyglet.text.Label('Score: {}'.format(self.super_class.current_game.score),
 							   x = 490, y = 768 - 144, font_size = 32,
 							   color = (0, 0, 0, 255))
@@ -40,10 +35,13 @@ class PygletGUI(pyglet.window.Window):
 
 	def on_won(self):
 		print('ez win')
-		self.score.text = 'Score: {}\nYou\'re Winner!'.format(self.super_class.current_game.score)
+		self.wait_input = True
+		pyglet.sprite.Sprite(self.assets['won']).opacity = 255 * (85 / 100)
 
 	def on_lost(self):
 		print('lost lol noob')
+		self.wait_input = True
+		pyglet.sprite.Sprite(self.assets['lost']).opacity = 255 * (85 / 100)
 
 	def on_exit(self):
 		self.view_events.end()
@@ -77,7 +75,9 @@ class PygletGUI(pyglet.window.Window):
 			2187: self.load_img('2187', anchor_x = 44, anchor_y = 44),
 			6561: self.load_img('6561', anchor_x = 44, anchor_y = 44),
 			19683: self.load_img('19683', anchor_x = 44, anchor_y = 44),
-			59049: self.load_img('59049', anchor_x = 44, anchor_y = 44)
+			59049: self.load_img('59049', anchor_x = 44, anchor_y = 44),
+			'win': self.load_img('youwin'),
+			'lose': self.load_img('youlose')
 		}
 		return assets
 
@@ -118,7 +118,7 @@ class PygletGUI(pyglet.window.Window):
 				# Animate Tiles Fade
 				for vector in self.animate_tiles_move:
 					if self.sprites[vector[0]][vector[1]].scale > 0:
-						self.sprites[vector[0]][vector[1]].scale -= dt * 8
+						self.sprites[vector[0]][vector[1]].scale -= dt * 7.25
 						print(self.sprites[vector[0]][vector[1]].scale)
 					else:
 						print('part3')
@@ -131,7 +131,7 @@ class PygletGUI(pyglet.window.Window):
 				def trig(dt):
 					self.flag2 = True
 					print(self.sprites)
-				pyglet.clock.schedule_once(trig, 0.03)
+				pyglet.clock.schedule_once(trig, 0.05)
 
 			elif self.flag2 and self.flag1:
 			# Animate New Tiles
@@ -144,7 +144,7 @@ class PygletGUI(pyglet.window.Window):
 						self.sprites[vector[0]][vector[1]].scale = 0
 				for vector in self.animate_tiles:
 					if self.sprites[vector[0]][vector[1]].scale < 1:
-						self.sprites[vector[0]][vector[1]].scale += dt * 8
+						self.sprites[vector[0]][vector[1]].scale += dt * 7.25
 					else:
 						self.flag = True
 						self.sprites[vector[0]][vector[1]].scale = 1
