@@ -24,10 +24,10 @@ class TerminalInterface(Interface):
             with open("save.json") as infile:
                 game_state = json.load(infile)
             self.view_events.create(size=6, initial_value=3,
-                                    initial_tiles=1, win_condition=10,
+                                    initial_tiles=36, win_condition=10,
                                     game_state=game_state)
         else:
-            self.view_events.create(size=6, initial_value=3,
+            self.view_events.create(size=3, initial_value=3,
                                     initial_tiles=1, win_condition=10)
 
     def ask_input(self):
@@ -52,7 +52,7 @@ class TerminalInterface(Interface):
         print(self.current_game.board)
         print(self.controller.game_state())
 
-    def on_lose(self):
+    def on_lost(self):
         print("You lost :(")
         if os.path.exists("save.json"):
             os.remove("save.json")

@@ -119,7 +119,7 @@ class Game:
         self.score += report["score"]
 
         # check for win/lose conditions
-        if self.is_lost():
+        if self.board.no_moves_possible():
             self.game_status = GameState.LOST
         if not self.is_continued() and self.win_tile in [t[0] for t in report["merged_tiles"]]:
             self.game_status = GameState.WON

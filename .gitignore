@@ -1,6 +1,7 @@
 *.afdesign
 .DS_Store
 save.json
+distribution/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
