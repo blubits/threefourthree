@@ -20,6 +20,7 @@ class TerminalInterface(Interface):
         print("Welcome to the three-four-three terminal interface!")
         print()
         if os.path.exists("save.json"):
+            print("Loading from a saved game...")
             with open("save.json") as infile:
                 game_state = json.load(infile)
             self.view_events.create(size=6, initial_value=3,
