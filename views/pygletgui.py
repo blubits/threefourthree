@@ -40,7 +40,7 @@ class PygletGUI(pyglet.window.Window):
 											color = (0, 0, 0, 255), batch = self.batch)
 		self.message = pyglet.text.Label('', x = 818, y = 768 - 704, font_size = 32,
 											color = (0, 0, 0, 255), batch = self.batch)
-				
+
 		# Animation Purposes
 		self.anim_done = [False for _ in range(5)]
 		self.animate_tiles_destroy = []
@@ -48,7 +48,7 @@ class PygletGUI(pyglet.window.Window):
 		self.animation_start = True
 
 		# Init run
-		
+
 	def load_img(self, file, format = 'png', anchor_x = 0, anchor_y = 0):
 		img = pyglet.image.load('assets/{}.{}'.format(file, format))
 		img.anchor_x = anchor_x
@@ -158,7 +158,7 @@ class PygletGUI(pyglet.window.Window):
 	def save(self):
 		self.message.text = 'Saving...'
 		with open('save.json', 'w') as outfile:
-			json.dump(self.game_state, outfile)
+			json.dump(self.init_class.controller.game_state(), outfile)
 		self.message.text = 'Saved.'
 		self.wait_input = False
 
@@ -177,7 +177,7 @@ class PygletGUI(pyglet.window.Window):
 			self.animation_start = True
 		else:
 			self.message.text = "No save file."
-		
+
 
 	def on_won(self):
 		self.wait_input = True
@@ -256,7 +256,7 @@ class PygletGUI(pyglet.window.Window):
 		self.score_text.draw()
 		self.batch.draw()
 		self.game_over_batch.draw()
-	
+
 	def run(self):
 		pyglet.clock.schedule_interval(self.animate, 1 / 60)
 		pyglet.app.run()
